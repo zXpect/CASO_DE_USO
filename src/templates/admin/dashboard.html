@@ -1,0 +1,230 @@
+```html
+{% extends "layout.html" %}
+
+{% block title %}Panel Principal - Servicios Residenciales{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h2 class="mb-0">
+                    <i class="fas fa-tachometer-alt"></i> Panel de Control - 
+                    Torre {{ current_user.torre }}, Apartamento {{ current_user.apartamento }}
+                    {% if current_user.es_administrador %}
+                    <span class="badge bg-danger">Administrador</span>
+                    {% elif current_user.tiene_servicios %}
+                    <span class="badge bg-success">Usuario Principal</span>
+                    {% endif %}
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sección de Agua -->
+    <div class="col-md-4">
+        <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0"><i class="fas fa-tint"></i> Agua</h4>
+            </div>
+            <div class="card-body">
+                {% if facturas_por_servicio['agua'] %}
+                    {% set ultima_factura = facturas_por_servicio['agua'][0] %}
+                    <div class="mb-3">
+                        <h5>Última factura</h5>
+                        <p>Fecha vencimiento: {{ ultima_factura.fecha_vencimiento.strftime('%d/%m/%Y') }}</p>
+                        <p>Valor total: ${{ "{:,.0f}".format(ultima_factura.valor_total) }}</p>
+                        <p>Consumo: {{ ultima_factura.consumo_total }} m³</p>
+                        
+                        {% set valor_por_apto = ultima_factura.calcular_valor_por_apartamento() %}
+                        <div class="alert alert-info">
+                            Su parte: ${{ "{:,.0f}".format(valor_por_apto) }}
+                        </div>
+                        
+                        {% set pago = pagos_por_factura.get(ultima_factura.id) %}
+                        {% if pago %}
+                            {% if pago.estado == 'confirmado' %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i> Pago confirmado
+                                </div>
+                            {% elif pago.estado == 'rechazado' %}
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-times-circle"></i> Pago rechazado
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-clock"></i> Pago pendiente de confirmación
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="d-grid">
+                                <a href="{{ url_for('crear_pago', factura_id=ultima_factura.id) }}" class="btn btn-info">
+                                    <i class="fas fa-money-bill-wave"></i> Registrar Pago
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid">
+                        <a href="{{ url_for('ver_agua') }}" class="btn btn-outline-info">
+                            <i class="fas fa-list"></i> Ver Historial
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No hay facturas de agua registradas.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sección de Energía -->
+    <div class="col-md-4">
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="fas fa-bolt"></i> Energía</h4>
+            </div>
+            <div class="card-body">
+                {% if facturas_por_servicio['energia'] %}
+                    {% set ultima_factura = facturas_por_servicio['energia'][0] %}
+                    <div class="mb-3">
+                        <h5>Última factura</h5>
+                        <p>Fecha vencimiento: {{ ultima_factura.fecha_vencimiento.strftime('%d/%m/%Y') }}</p>
+                        <p>Valor total: ${{ "{:,.0f}".format(ultima_factura.valor_total) }}</p>
+                        <p>Consumo: {{ ultima_factura.consumo_total }} kWh</p>
+                        
+                        {% set valor_por_apto = ultima_factura.calcular_valor_por_apartamento() %}
+                        <div class="alert alert-warning">
+                            Su parte: ${{ "{:,.0f}".format(valor_por_apto) }}
+                        </div>
+                        
+                        {% set pago = pagos_por_factura.get(ultima_factura.id) %}
+                        {% if pago %}
+                            {% if pago.estado == 'confirmado' %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i> Pago confirmado
+                                </div>
+                            {% elif pago.estado == 'rechazado' %}
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-times-circle"></i> Pago rechazado
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-clock"></i> Pago pendiente de confirmación
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="d-grid">
+                                <a href="{{ url_for('crear_pago', factura_id=ultima_factura.id) }}" class="btn btn-warning">
+                                    <i class="fas fa-money-bill-wave"></i> Registrar Pago
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid">
+                        <a href="{{ url_for('ver_energia') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-list"></i> Ver Historial
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        No hay facturas de energía registradas.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sección de Gas -->
+    <div class="col-md-4">
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="fas fa-fire"></i> Gas</h4>
+            </div>
+            <div class="card-body">
+                {% if facturas_por_servicio['gas'] %}
+                    {% set ultima_factura = facturas_por_servicio['gas'][0] %}
+                    <div class="mb-3">
+                        <h5>Última factura</h5>
+                        <p>Fecha vencimiento: {{ ultima_factura.fecha_vencimiento.strftime('%d/%m/%Y') }}</p>
+                        <p>Valor total: ${{ "{:,.0f}".format(ultima_factura.valor_total) }}</p>
+                        <p>Consumo: {{ ultima_factura.consumo_total }} m³</p>
+                        
+                        {% set valor_por_apto = ultima_factura.calcular_valor_por_apartamento() %}
+                        <div class="alert alert-danger">
+                            Su parte: ${{ "{:,.0f}".format(valor_por_apto) }}
+                        </div>
+                        
+                        {% set pago = pagos_por_factura.get(ultima_factura.id) %}
+                        {% if pago %}
+                            {% if pago.estado == 'confirmado' %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i> Pago confirmado
+                                </div>
+                            {% elif pago.estado == 'rechazado' %}
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-times-circle"></i> Pago rechazado
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-clock"></i> Pago pendiente de confirmación
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="d-grid">
+                                <a href="{{ url_for('crear_pago', factura_id=ultima_factura.id) }}" class="btn btn-danger">
+                                    <i class="fas fa-money-bill-wave"></i> Registrar Pago
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid">
+                        <a href="{{ url_for('ver_gas') }}" class="btn btn-outline-danger">
+                            <i class="fas fa-list"></i> Ver Historial
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        No hay facturas de gas registradas.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.es_administrador or current_user.tiene_servicios %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-tools"></i> Acciones de Administración</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <a href="{{ url_for('crear_factura') }}" class="btn btn-success mb-3">
+                                <i class="fas fa-plus-circle"></i> Registrar Nueva Factura
+                            </a>
+                        </div>
+                    </div>
+                    {% if current_user.es_administrador %}
+                    <div class="col-md-4">
+                        <div class="d-grid">
+                            <a href="{{ url_for('crear_admin') }}" class="btn btn-danger mb-3">
+                                <i class="fas fa-user-shield"></i> Crear Usuario Administrador
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+```
