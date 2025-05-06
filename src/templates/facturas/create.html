@@ -1,0 +1,154 @@
+{% extends "layout.html" %}
+
+{% block title %}Registrar Factura - Servicios Residenciales{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Registrar Nueva Factura</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('crear_factura') }}" enctype="multipart/form-data">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="tipo_servicio" class="form-label">Tipo de Servicio</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-stream"></i></span>
+                                <select class="form-select" id="tipo_servicio" name="tipo_servicio" required>
+                                    <option value="" selected disabled>Seleccione...</option>
+                                    <option value="agua">Agua</option>
+                                    <option value="energia">Energía</option>
+                                    <option value="gas">Gas</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="torre" class="form-label">Torre</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                <select class="form-select" id="torre" name="torre" required>
+                                    <option value="" selected disabled>Seleccione...</option>
+                                    {% for i in range(1, 5) %}
+                                        <option value="{{ i }}" {% if current_user.torre == i %}selected{% endif %}>Torre {{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="apartamento_base" class="form-label">Apartamento Base</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-home"></i></span>
+                                <select class="form-select" id="apartamento_base" name="apartamento_base" required>
+                                    <option value="" selected disabled>Seleccione...</option>
+                                    {% for i in range(1, 13, 4) %}
+                                        <option value="{{ i }}" {% if current_user.apartamento == i %}selected{% endif %}>{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="form-text text-muted">Solo los apartamentos base (1, 5, 9) pueden recibir facturas directamente.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="fecha_emision" class="form-label">Fecha de Emisión</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" class="form-control" id="fecha_emision" name="fecha_emision" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-times"></i></span>
+                                <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="valor_total" class="form-label">Valor Total</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" id="valor_total" name="valor_total" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="consumo_total" class="form-label">Consumo Total</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control" id="consumo_total" name="consumo_total" required>
+                                <span class="input-group-text" id="unidad-consumo">Unidad</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="imagen_factura" class="form-label">Imagen de la Factura</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-image"></i></span>
+                            <input type="file" class="form-control" id="imagen_factura" name="imagen_factura" accept="image/png, image/jpeg, image/jpg, application/pdf">
+                        </div>
+                        <small class="form-text text-muted">Formatos aceptados: JPG, PNG, PDF</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notas" class="form-label">Notas Adicionales</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-sticky-note"></i></span>
+                            <textarea class="form-control" id="notas" name="notas" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Guardar Factura
+                        </button>
+                        <a href="{{ url_for('listar_facturas') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle"></i> Esta factura será distribuida automáticamente entre los apartamentos asociados según las reglas configuradas del sistema.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cambiar la unidad de medida dependiendo del tipo de servicio seleccionado
+    document.getElementById('tipo_servicio').addEventListener('change', function() {
+        const unidadSpan = document.getElementById('unidad-consumo');
+        switch(this.value) {
+            case 'agua':
+                unidadSpan.textContent = 'm³';
+                break;
+            case 'energia':
+                unidadSpan.textContent = 'kWh';
+                break;
+            case 'gas':
+                unidadSpan.textContent = 'm³';
+                break;
+            default:
+                unidadSpan.textContent = 'Unidad';
+        }
+    });
+    
+    // Validar que la fecha de vencimiento sea posterior a la fecha de emisión
+    document.getElementById('fecha_vencimiento').addEventListener('change', function() {
+        const fechaEmision = new Date(document.getElementById('fecha_emision').value);
+        const fechaVencimiento = new Date(this.value);
+        
+        if (fechaVencimiento <= fechaEmision) {
+            alert('La fecha de vencimiento debe ser posterior a la fecha de emisión');
+            this.value = '';
+        }
+    });
+</script>
+{% endblock %}
