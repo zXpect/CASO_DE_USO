@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block title %}Bienvenido - Servicios Residenciales{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2 text-center">
+        <h1 class="display-4 mb-4">Bienvenido al Sistema de Gestión de Servicios</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">Gestión transparente de servicios compartidos</h2>
+                <p class="card-text">
+                    Esta aplicación fue diseñada para ayudar a gestionar los servicios públicos compartidos
+                    en el conjunto residencial, permitiendo llevar un control transparente de los consumos y pagos.
+                </p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <i class="fas fa-tint fa-3x text-primary mb-3"></i>
+                            <h3>Agua</h3>
+                            <p>Gestión de facturas y pagos del servicio de agua</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <i class="fas fa-bolt fa-3x text-warning mb-3"></i>
+                            <h3>Energía</h3>
+                            <p>Control de consumos y pagos de energía eléctrica</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-box">
+                            <i class="fas fa-fire fa-3x text-danger mb-3"></i>
+                            <h3>Gas</h3>
+                            <p>Seguimiento de facturación y pagos del servicio de gas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 col-md-6 mx-auto">
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
+            </a>
+            <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-user-plus"></i> Registrarse
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
