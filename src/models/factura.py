@@ -4,7 +4,7 @@ from datetime import datetime
 
 class Factura:
     def __init__(self, tipo_servicio, torre, apartamento_base, fecha_emision, fecha_vencimiento, 
-                 valor_total, consumo_total, imagen_factura=None, estado="pendiente", id=None):
+                 valor_total, consumo_total, usuario_id=None, imagen_factura=None, estado="pendiente", id=None):
         self.id = id
         self.tipo_servicio = tipo_servicio  # agua, energia, gas
         self.torre = torre  # 1-4
@@ -17,6 +17,7 @@ class Factura:
         self.estado = estado  # pendiente, pagada, vencida
         self.fecha_creacion = datetime.now()
         self.fecha_actualizacion = datetime.now()
+        self.usuario_id = usuario_id
     
     def save(self):
         if not self.id:
@@ -31,7 +32,8 @@ class Factura:
                 'imagen_factura': self.imagen_factura,
                 'estado': self.estado,
                 'fecha_creacion': self.fecha_creacion,
-                'fecha_actualizacion': self.fecha_actualizacion
+                'fecha_actualizacion': self.fecha_actualizacion,
+                'usuario_id': self.usuario_id
             }
             result = facturas_collection.insert_one(factura_data)
             self.id = str(result.inserted_id)
@@ -50,7 +52,8 @@ class Factura:
                     'consumo_total': self.consumo_total,
                     'imagen_factura': self.imagen_factura,
                     'estado': self.estado,
-                    'fecha_actualizacion': self.fecha_actualizacion
+                    'fecha_actualizacion': self.fecha_actualizacion,
+                    'usuario_id': self.usuario_id
                 }}
             )
             return self

@@ -1,0 +1,114 @@
+{% extends "layout.html" %}
+
+{% block title %}Listado de Pagos - Servicios Residenciales{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-money-bill-wave"></i> Pagos Registrados</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group">
+            <a href="{{ url_for('listar_facturas', filtro='todos') }}" class="btn btn-outline-primary {% if filtro_actual == 'todos' %}active{% endif %}">Todos</a>
+            <a href="{{ url_for('listar_facturas', filtro='agua') }}" class="btn btn-outline-info {% if filtro_actual == 'agua' %}active{% endif %}">Agua</a>
+            <a href="{{ url_for('listar_facturas', filtro='energia') }}" class="btn btn-outline-warning {% if filtro_actual == 'energia' %}active{% endif %}">Energía</a>
+            <a href="{{ url_for('listar_facturas', filtro='gas') }}" class="btn btn-outline-danger {% if filtro_actual == 'gas' %}active{% endif %}">Gas</a>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <div class="row">
+            <div class="col-md-8">
+                <h5 class="mb-0">Filtros de Búsqueda</h5>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilters">
+                    <i class="fas fa-filter"></i> Mostrar/Ocultar Filtros
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="collapse" id="collapseFilters">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('listar_facturas') }}" class="row g-3">
+                <!-- Campos de filtro -->
+                <!-- ... (omitido porque ya está incluido en tu mensaje anterior) -->
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de resultados -->
+{% if pagos %}
+<div class="table-responsive">
+    <table class="table table-striped table-hover filtrable">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Factura</th>
+                <th>Servicio</th>
+                <th>Torre-Apto</th>
+                <th>Fecha de Pago</th>
+                <th>Monto</th>
+                <th>Método</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pago in pagos %}
+            <tr {% if pago.anulado %}class="table-danger text-decoration-line-through"{% endif %}>
+                <td>{{ pago.id }}</td>
+                <td>
+                    <a href="{{ url_for('detalle_factura', factura_id=pago.factura_id) }}" class="text-decoration-none">
+                        #{{ pago.factura_id }}
+                    </a>
+                </td>
+                <td>
+                    {% if pago.factura.tipo_servicio == 'agua' %}
+                        <span class="badge bg-info text-dark"><i class="fas fa-tint"></i> Agua</span>
+                    {% elif pago.factura.tipo_servicio == 'energia' %}
+                        <span class="badge bg-warning text-dark"><i class="fas fa-bolt"></i> Energía</span>
+                    {% elif pago.factura.tipo_servicio == 'gas' %}
+                        <span class="badge bg-danger"><i class="fas fa-fire"></i> Gas</span>
+                    {% endif %}
+                </td>
+                <td>{{ pago.factura.torre }}-{{ pago.factura.apartamento_base }}</td>
+                <td>{{ pago.fecha_pago.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>${{ "{:,.0f}".format(pago.monto) }}</td>
+                <td>{{ pago.metodo_pago|capitalize }}</td>
+                <td>
+                    {% if pago.anulado %}
+                        <span class="badge bg-danger">Anulado</span>
+                    {% else %}
+                        <span class="badge bg-success">Activo</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-group">
+                        {% if pago.comprobante %}
+                        <a href="{{ url_for('ver_comprobante', pago_id=pago.id) }}" class="btn btn-sm btn-info" target="_blank" data-bs-toggle="tooltip" title="Ver Comprobante">
+                            <i class="fas fa-receipt"></i>
+                        </a>
+                        {% endif %}
+                        {% if not pago.anulado and current_user.es_administrador %}
+                        <a href="{{ url_for('anular_pago', pago_id=pago.id) }}" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Anular Pago" onclick="return confirm('¿Está seguro de anular este pago?');">
+                            <i class="fas fa-ban"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> No se encontraron pagos registrados con los filtros aplicados.
+</div>
+{% endif %}
+{% endblock %}

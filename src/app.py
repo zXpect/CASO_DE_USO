@@ -389,7 +389,7 @@ def crear_admin():
         # Verificar si ya existe un usuario con ese email
         if Usuario.get_by_email(email):
             flash('Ya existe un usuario con ese correo', 'danger')
-            return render_template('auth/create_admin.html')
+            return render_template('auth/crear_admin.html')
         
         # Crear el nuevo administrador
         user = Usuario(

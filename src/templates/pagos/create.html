@@ -1,0 +1,210 @@
+{% extends "layout.html" %}
+
+{% block title %}Registrar Pago - Servicios Residenciales{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('listar_facturas') }}">Pagos</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Registrar Pago</li>
+            </ol>
+        </nav>
+        
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="fas fa-hand-holding-usd"></i> Registrar Nuevo Pago</h4>
+            </div>
+            <div class="card-body">
+                {% if factura %}
+                <div class="alert alert-info mb-4">
+                    <h5 class="alert-heading">Información de la Factura</h5>
+                    <p>Está registrando un pago para la siguiente factura:</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Servicio:</strong> 
+                            {% if factura.tipo_servicio == 'agua' %}
+                            <span class="text-info"><i class="fas fa-tint"></i> Agua</span>
+                            {% elif factura.tipo_servicio == 'energia' %}
+                            <span class="text-warning"><i class="fas fa-bolt"></i> Energía</span>
+                            {% elif factura.tipo_servicio == 'gas' %}
+                            <span class="text-danger"><i class="fas fa-fire"></i> Gas</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Torre/Apartamento:</strong> {{ factura.torre }}-{{ factura.apartamento_base }}
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <strong>Fecha de emisión:</strong> {{ factura.fecha_emision.strftime('%d/%m/%Y') }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Fecha de vencimiento:</strong> {{ factura.fecha_vencimiento.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <strong>Valor total:</strong> ${{ "{:,.0f}".format(factura.valor_total) }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Estado:</strong> 
+                            <span class="badge {% if factura.estado == 'pendiente' %}bg-warning text-dark{% elif factura.estado == 'vencida' %}bg-danger{% else %}bg-success{% endif %}">
+                                {{ factura.estado|capitalize }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <form method="POST" action="{{ url_for('crear_pago', factura_id=factura.id) }}" enctype="multipart/form-data">
+                    {% if factura %}
+                    <input type="hidden" name="factura_id" value="{{ factura.id }}">
+                    {% else %}
+                    <div class="mb-3">
+                        <label for="factura_id" class="form-label">Seleccionar Factura</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-file-invoice-dollar"></i></span>
+                            <select class="form-select" id="factura_id" name="factura_id" required>
+                                <option value="" selected disabled>Seleccione una factura...</option>
+                                {% for factura in facturas_pendientes %}
+                                <option value="{{ factura.id }}">
+                                    Torre {{ factura.torre }}-{{ factura.apartamento_base }} | 
+                                    {% if factura.tipo_servicio == 'agua' %}Agua
+                                    {% elif factura.tipo_servicio == 'energia' %}Energía
+                                    {% elif factura.tipo_servicio == 'gas' %}Gas
+                                    {% endif %} | 
+                                    ${{ "{:,.0f}".format(factura.valor_total) }} | 
+                                    Vence: {{ factura.fecha_vencimiento.strftime('%d/%m/%Y') }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="monto" class="form-label">Monto del Pago</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" step="0.01" class="form-control" id="monto" name="monto" 
+                                       value="{{ factura.valor_total if factura else '' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fecha_pago" class="form-label">Fecha de Pago</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" class="form-control" id="fecha_pago" name="fecha_pago" 
+                                       value="{{ today }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="metodo_pago" class="form-label">Método de Pago</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-money-check-alt"></i></span>
+                            <select class="form-select" id="metodo_pago" name="metodo_pago" required>
+                                <option value="" selected disabled>Seleccione un método de pago...</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia Bancaria</option>
+                                <option value="tarjeta">Tarjeta de Crédito/Débito</option>
+                                <option value="cheque">Cheque</option>
+                                <option value="pse">PSE</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="numero_referencia" class="form-label">Número de Referencia</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                            <input type="text" class="form-control" id="numero_referencia" name="numero_referencia" 
+                                   placeholder="Número de transacción, recibo, etc.">
+                        </div>
+                        <small class="form-text text-muted">Opcional. Utilice este campo para registrar el número de transacción, recibo o cualquier referencia relacionada con el pago.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comprobante" class="form-label">Comprobante de Pago</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-receipt"></i></span>
+                            <input type="file" class="form-control" id="comprobante" name="comprobante" 
+                                   accept="image/png, image/jpeg, image/jpg, application/pdf">
+                        </div>
+                        <small class="form-text text-muted">Formatos aceptados: JPG, PNG, PDF</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="observaciones" class="form-label">Observaciones</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-comment-alt"></i></span>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmar_pago" name="confirmar_pago" value="1" required>
+                        <label class="form-check-label" for="confirmar_pago">
+                            Confirmo que la información proporcionada es correcta y que el pago ha sido efectivamente realizado.
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-save"></i> Registrar Pago
+                        </button>
+                        <a href="{{ url_for('listar_facturas') if not factura else url_for('detalle_factura', factura_id=factura.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle"></i> El estado de la factura se actualizará automáticamente al registrar el pago completo.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cambiar referencia según método de pago
+    document.getElementById('metodo_pago').addEventListener('change', function() {
+        const refInput = document.getElementById('numero_referencia');
+        const refLabel = document.querySelector('label[for="numero_referencia"]');
+        
+        switch(this.value) {
+            case 'efectivo':
+                refLabel.textContent = 'Número de Recibo';
+                refInput.placeholder = 'Número de recibo de caja';
+                break;
+            case 'transferencia':
+                refLabel.textContent = 'Número de Transferencia';
+                refInput.placeholder = 'Número o código de la transferencia';
+                break;
+            case 'tarjeta':
+                refLabel.textContent = 'Número de Aprobación';
+                refInput.placeholder = 'Número de aprobación del voucher';
+                break;
+            case 'cheque':
+                refLabel.textContent = 'Número de Cheque';
+                refInput.placeholder = 'Número del cheque';
+                break;
+            case 'pse':
+                refLabel.textContent = 'Código CUS';
+                refInput.placeholder = 'Código único de seguimiento (CUS)';
+                break;
+            default:
+                refLabel.textContent = 'Número de Referencia';
+                refInput.placeholder = 'Número de transacción, recibo, etc.';
+        }
+    });
+</script>
+{% endblock %}

@@ -5,7 +5,7 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_key_changeme')
-    MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/servicios_app')
+    MONGODB_URI = os.environ.get('MONGODB_URI', 'mongodb+srv://ballesterosmaik:AeX2OhCCTcIyUq6z@cluster0.ukqq6q4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
     DATABASE_NAME = os.environ.get('DATABASE_NAME', 'servicios_app')
     
     # Constantes para la aplicación

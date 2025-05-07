@@ -1,0 +1,257 @@
+{% extends "layout.html" %}
+
+{% block title %}Detalle de Factura - Servicios Residenciales{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('listar_facturas') }}">Facturas</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Detalle</li>
+            </ol>
+        </nav>
+        
+        <div class="card">
+            <div class="card-header 
+                {% if factura.tipo_servicio == 'agua' %}bg-info text-dark
+                {% elif factura.tipo_servicio == 'energia' %}bg-warning text-dark
+                {% elif factura.tipo_servicio == 'gas' %}bg-danger text-white
+                {% else %}bg-primary text-white{% endif %}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        {% if factura.tipo_servicio == 'agua' %}
+                        <i class="fas fa-tint"></i> Factura de Agua
+                        {% elif factura.tipo_servicio == 'energia' %}
+                        <i class="fas fa-bolt"></i> Factura de Energía
+                        {% elif factura.tipo_servicio == 'gas' %}
+                        <i class="fas fa-fire"></i> Factura de Gas
+                        {% endif %}
+                    </h4>
+                    <span class="badge {% if factura.estado == 'pendiente' %}bg-warning text-dark
+                          {% elif factura.estado == 'pagada' %}bg-success
+                          {% elif factura.estado == 'vencida' %}bg-danger{% endif %} fs-6">
+                        {{ factura.estado|capitalize }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="border-bottom pb-2">Información General</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <th class="w-50">ID Factura:</th>
+                                <td>{{ factura.id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Torre:</th>
+                                <td>{{ factura.torre }}</td>
+                            </tr>
+                            <tr>
+                                <th>Apartamento Base:</th>
+                                <td>{{ factura.apartamento_base }}</td>
+                            </tr>
+                            <tr>
+                                <th>Fecha de Emisión:</th>
+                                <td>{{ factura.fecha_emision.strftime('%d/%m/%Y') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Fecha de Vencimiento:</th>
+                                <td>{{ factura.fecha_vencimiento.strftime('%d/%m/%Y') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Registrado por:</th>
+                                <td>{{ factura.usuario_id.nombre }}</td>
+                            </tr>
+                            <tr>
+                                <th>Fecha de Registro:</th>
+                                <td>{{ factura.fecha_emision.strftime('%d/%m/%Y %H:%M') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="border-bottom pb-2">Detalles del Consumo</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <th class="w-50">Valor Total:</th>
+                                <td>${{ "{:,.0f}".format(factura.valor_total) }}</td>
+                            </tr>
+                            <tr>
+                                <th>Consumo Total:</th>
+                                <td>
+                                    {{ factura.consumo_total }} 
+                                    {% if factura.tipo_servicio == 'agua' or factura.tipo_servicio == 'gas' %}
+                                    m³
+                                    {% elif factura.tipo_servicio == 'energia' %}
+                                    kWh
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Costo por Unidad:</th>
+                                <td>${{ "{:,.2f}".format(factura.valor_total / factura.consumo_total) }}</td>
+                            </tr>
+                            <tr>
+                                <th>Apartamentos asociados:</th>
+                                <td>
+                                    {% for apto in factura.get_apartamentos_asociados() %}
+                                    <span class="badge bg-secondary">{{ apto }}</span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5 class="border-bottom pb-2">Distribución del Consumo</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Apartamento</th>
+                                        <th>Consumo</th>
+                                        <th>Valor a Pagar</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for distribucion in factura.distribuciones %}
+                                    <tr>
+                                        <td>{{ distribucion.apartamento }}</td>
+                                        <td>
+                                            {{ distribucion.consumo }} 
+                                            {% if factura.tipo_servicio == 'agua' or factura.tipo_servicio == 'gas' %}
+                                            m³
+                                            {% elif factura.tipo_servicio == 'energia' %}
+                                            kWh
+                                            {% endif %}
+                                        </td>
+                                        <td>${{ "{:,.0f}".format(distribucion.valor) }}</td>
+                                        <td>
+                                            {% if distribucion.estado == 'pendiente' %}
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                            {% elif distribucion.estado == 'pagada' %}
+                                            <span class="badge bg-success">Pagada</span>
+                                            {% elif distribucion.estado == 'vencida' %}
+                                            <span class="badge bg-danger">Vencida</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if factura.notas %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-sticky-note"></i> Notas Adicionales</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">{{ factura.notas|nl2br }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if factura.imagen_factura %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5 class="border-bottom pb-2"><i class="fas fa-file-image"></i> Imagen de la Factura</h5>
+                        <div class="text-center">
+                            <a href="{{ url_for('imagen_factura', factura_id=factura.id) }}" target="_blank" class="d-inline-block">
+                                <img src="{{ url_for('imagen_factura_miniatura', factura_id=factura.id) }}" alt="Factura" class="img-fluid imagen-factura mt-2" style="max-height: 300px;">
+                            </a>
+                            <div class="mt-2">
+                                <a href="{{ url_for('imagen_factura', factura_id=factura.id) }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="fas fa-search-plus"></i> Ver Imagen Completa
+                                </a>
+                                <a href="{{ url_for('descargar_factura', factura_id=factura.id) }}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-download"></i> Descargar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="card-footer">
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{{ url_for('listar_facturas') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver al Listado
+                        </a>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        {% if current_user.es_administrador or (current_user.torre == factura.torre and current_user.apartamento == factura.apartamento_base and current_user.tiene_servicios) %}
+                        <a href="{{ url_for('editar_factura', factura_id=factura.id) }}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Editar Factura
+                        </a>
+                        {% endif %}
+                        
+                        {% if factura.estado == 'pendiente' and (current_user.es_administrador or current_user.torre == factura.torre) %}
+                        <a href="{{ url_for('crear_pago', factura_id=factura.id) }}" class="btn btn-success">
+                            <i class="fas fa-hand-holding-usd"></i> Registrar Pago
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if pagos %}
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Historial de Pagos</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Monto</th>
+                                <th>Método</th>
+                                <th>Registrado por</th>
+                                <th>Comprobante</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pago in pagos %}
+                            <tr>
+                                <td>{{ pago.fecha_pago.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>${{ "{:,.0f}".format(pago.monto) }}</td>
+                                <td>{{ pago.metodo_pago|capitalize }}</td>
+                                <td>{{ pago.usuario_id.nombre }}</td>
+                                <td>
+                                    {% if pago.comprobante %}
+                                    <a href="{{ url_for('ver_comprobante', pago_id=pago.id) }}" class="btn btn-sm btn-outline-info" target="_blank">
+                                        <i class="fas fa-receipt"></i> Ver
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">No disponible</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
